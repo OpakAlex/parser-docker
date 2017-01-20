@@ -1,0 +1,5 @@
+screenshots/*
+!screenshots/.gitkeep
+node_modules
+.env
+@rerun.txt

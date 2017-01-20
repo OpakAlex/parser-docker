@@ -1,0 +1,38 @@
+{
+  "name": "opula-parser",
+  "version": "0.0.1",
+  "description": "PArser",
+  "main": "index.js",
+  "scripts": {
+    "test": "cucumber.js features --format progress"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "cucumber",
+    "gherkin",
+    "webdriverio"
+  ],
+  "author": "",
+  "contributors": [
+    "Alex Opak <opak.alexandr@gmail.com>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "",
+  "dependencies": {
+    "cucumber": "^1.1.0",
+    "dotenv": "^2.0.0",
+    "node-fetch": "^1.5.3",
+    "webdriverio": "4.0.9"
+  },
+  "devDependencies": {
+    "babel-core": "6.3.21",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-preset-es2015": "^6.9.0"
+  }
+}

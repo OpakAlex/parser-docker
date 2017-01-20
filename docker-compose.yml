@@ -1,0 +1,13 @@
+chrome:
+  image: selenium/standalone-chrome:latest
+  ports:
+    - "4444:4444"
+  expose:
+    - 4444
+  volumes:
+    - /dev/shm:/dev/shm
+  dns:
+    - "8.8.8.8"
+  extra_hosts:
+    - localhost:${IP_ADDRESS}
+  command: bash -c "./opt/bin/entry_point.sh"
