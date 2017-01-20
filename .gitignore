@@ -1,4 +1,6 @@
 screenshots/*
+hotels/*
+!hotels/.gitkeep
 !screenshots/.gitkeep
 node_modules
 .env
