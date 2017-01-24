@@ -6,9 +6,9 @@ Feature:
     * I go to tripadvisor.com
 
   Scenario: Search for Paris hotels
-    When I search for "Paris" hotels
-    Then I write to file "paris-hotels-list.json" list of hotels
+    When I search for "$City" hotels
+    Then I write to file "$City-hotels-list.json" list of hotels
 
   Scenario: Grap info from hotels
     When I grap info for all hotels in file
-    Then I write to file "paris-hotels-details.json" all info from "paris-hotels-list.json"
+    Then I write to file "$City-hotels-details.json" all info from "$City-hotels-list.json"

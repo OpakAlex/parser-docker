@@ -9,6 +9,7 @@ export default function() {
   });
 
   this.When(/^I search for "([^"]*)" hotels$/, function (city, done) {
+    city = this.city || city;
     browser
       .pause(4000)
       .waitForVisible('#mainSearch', 240000)
@@ -30,7 +31,7 @@ export default function() {
       .click('.poi_overview_item*=Hotels')
       .setValue('#GEO_SCOPED_SEARCH_INPUT', city)
       .waitForVisible('.resultContainer.local')
-      .click('.poi-name=Paris')
+      .click(`.poi-name=${city}`)
       .waitForVisible('#SEARCH_BUTTON')
       .click('#SEARCH_BUTTON')
       .waitForVisible('.p13n_geo_hotels*=Hotels')
@@ -42,6 +43,10 @@ export default function() {
   });
 
   this.Then(/^I write to file "([^"]*)" all info from "([^"]*)"$/, function (detailsFileName, fileName, done) {
+    if (this.city){
+      detailsFileName = `${this.city}-hotels-details.json` || detailsFileName;
+      fileName = `${this.city}-hotels-list.json` || fileName;
+    };
     let hotels = [];
     browser
       .call(() => {
@@ -50,7 +55,12 @@ export default function() {
         return hotels;
       })
       .call(() => {
-        // hotels = [hotels[0], hotels[1]];
+        if (this.hotelInfoIndex){
+          hotels = hotels.slice(this.hotelInfoIndex, hotels.length - 1)
+        }
+        if (this.hotelsCount){
+          hotels = hotels.slice(0, this.hotelsCount);
+        }
         return parseHotelInfo(0, hotels);
       })
       .call(() => {
@@ -58,12 +68,16 @@ export default function() {
         if (fs.existsSync(path)) {
           fs.unlinkSync(path);
         }
-        return fs.writeFile(path, JSON.stringify(hotels));
-      })
-      .call(done);
+        fs.writeFile(path, JSON.stringify(hotels));
+        console.log('Hotels INFO here:', path);
+        done();
+      });
   });
 
   this.Then(/^I write to file "([^"]*)" list of hotels$/, function (fileName, done) {
+    if (this.city){
+      fileName = `${this.city}-hotels-list.json`;
+    }
     let hotels = [];
     let totalPages = 0;
     browser
@@ -81,13 +95,15 @@ export default function() {
           fs.unlinkSync(path);
         }
         fs.writeFile(path, JSON.stringify(hotels));
+        console.log('Hotels Links:', path);
         done();
       });
   });
 
   let parseHotelInfo = (index, hotels) => {
     let url = hotels[index];
-    console.log(url, index);
+    console.log('HOTEL_INFO_INDEX:', index);
+    console.log('HOTEL_URL:', url);
     if (!url){
       return browser;
     }
@@ -97,8 +113,19 @@ export default function() {
     return browser
       .url(url)
       .waitForVisible('#HEADING')
+      .pause(2000)
       .executeAsync(function(done) {
         var el = document.getElementsByClassName('ui_backdrop dark')[0];
+        if(!el){
+          return done();
+        }
+        var event = new MouseEvent('click', {
+          'view': window,
+          'bubbles': true,
+          'cancelable': true
+        });
+        el.dispatchEvent(event);
+        el = document.getElementsByClassName('metaFocusMask')[0];
         if(!el){
           return done();
         }
@@ -113,9 +140,25 @@ export default function() {
       .getText('#HEADING').then(name => {
         hotels[index].name = name;
       })
-      .getText('.heading_rating .more.taLnk').then(reviews => {
-        hotels[index].total_reviews = reviews;
+      .elements('.heading_rating .more.taLnk').then(els => {
+        if (els.value.length > 0){
+          return browser
+            .getText('.heading_rating .more.taLnk').then(reviews => {
+              hotels[index].total_reviews = reviews;
+            })
+        }
+        return browser;
       })
+      .elements('.header_rating .more.taLnk').then(els => {
+        if (els.value.length > 0){
+          return browser
+            .getText('.header_rating .more.taLnk').then(reviews => {
+              hotels[index].total_reviews = reviews;
+            })
+        }
+        return browser;
+      })
+      .waitForVisible('.contact_item')
       .getText('.contact_item').then(items => {
         hotels[index].phone = items[0];
         hotels[index].address = items[3];
@@ -126,8 +169,15 @@ export default function() {
           return browser
             .waitForVisible('.taLnk*=E-mail hotel')
             .pause(1000)
+            .elements('.metaFocusMask').then(els => {
+              if (els.value.length > 0 ){
+                return browser
+                  .click('.metaFocusMask');
+              }
+              return browser;
+            })
             .click('.taLnk*=E-mail hotel')
-            .waitForVisible('.emailOwnerTxt input')
+            .waitForVisible('input.emailOwnerReadonly')
             .getValue('input.emailOwnerReadonly').then(el => {
               hotels[index].email = el;
             })
@@ -149,13 +199,16 @@ export default function() {
       })
       .call(() => {
         if (index === 0){
+          let month = new Date().getUTCMonth();
+          let day = new Date().getDate() + 1;
+          let date = `2017-${month}-${day}`;
           return browser
             .waitForVisible('span[data-datetype="CHECKIN"]')
             .click('span[data-datetype="CHECKIN"]')
             .waitForVisible('.dsdc-today')
             .click('.dsdc-today')
             .waitForVisible('.dsdc-day')
-            .click('.dsdc-day[data-date="2017-0-21"]')
+            .click(`.dsdc-day[data-date="${date}"]`)
             .pause(2000);
         }
         else{
